@@ -24,15 +24,62 @@
 #include "target/riscv/cpu.h"
 #include "hw/riscv/nexell_sdmmc.h"
 
-/*
- * Not yet implemented:
- *
- * Transmit FIFO using "qemu/fifo8.h"
- * NEXELL_UART_IE_TXWM interrupts
- * NEXELL_UART_IE_RXWM interrupts must honor fifo watermark
- * Rx FIFO watermark interrupt trigger threshold
- * Tx FIFO watermark interrupt trigger threshold.
- */
+static const struct sdmmcMapEntry {
+    hwaddr offset;
+    char   name[16];
+} nx_sdmmc_regmap[] = {
+    [NEXELL_SDMMC__CTRL]  =  { 0x000, "CTRL" },
+    [NEXELL_SDMMC__PWREN]  = { 0x004, "PWREN" },
+    [NEXELL_SDMMC__CLKDIV] = { 0x008, "CLKDIV" },
+    [NEXELL_SDMMC__CLKSRC] = { 0x00C, "CLKSRC" },
+    [NEXELL_SDMMC__CLKENA] = { 0x010, "CLKENA" },
+    [NEXELL_SDMMC__TMOUT]  = { 0x014, "TMOUT" },
+    [NEXELL_SDMMC__CTYPE]  = { 0x018, "CTYPE" },
+    [NEXELL_SDMMC__BLKSIZ] = { 0x01C, "BLKSIZ" },
+    [NEXELL_SDMMC__BYTCNT] = { 0x020, "BYTCNT" },
+    [NEXELL_SDMMC__INTMASK]= { 0x024, "INTMASK"},
+    [NEXELL_SDMMC__CMDARG] = { 0x028, "CMDARG"},
+    [NEXELL_SDMMC__CMD]    = { 0x02C, "CMD"},
+    [NEXELL_SDMMC__RESP]   = { 0x030, "RESP"},
+    [NEXELL_SDMMC__MINTSTS]= { 0x040, "MINTSTS"},
+    [NEXELL_SDMMC__RINTSTS]= { 0x044, "RINTSTS"},
+    [NEXELL_SDMMC__STATUS] = { 0x048, "STATUS"},
+    [NEXELL_SDMMC__FIFOTH] = { 0x04C, "FIFOTH"},
+    [NEXELL_SDMMC__CDETECT]= { 0x050, "CDETECT"},
+    [NEXELL_SDMMC__WRTPRT] = { 0x054, "WRTPRT"},
+    [NEXELL_SDMMC__GPIO]   = { 0x058, "GPIO"},
+    [NEXELL_SDMMC__TCBCNT] = { 0x05C, "TCBCNT"},
+    [NEXELL_SDMMC__TBBCNT] = { 0x060, "TBBCNT"},
+    [NEXELL_SDMMC__DEBNCE] = { 0x064, "DEBNCE"},
+    [NEXELL_SDMMC__USRID]  = { 0x068, "USRID"},
+    [NEXELL_SDMMC__VERID]  = { 0x06C, "VERID"},
+    [NEXELL_SDMMC__HCON]   = { 0x070, "HCON"},
+    [NEXELL_SDMMC__UHS_REG]= { 0x074, "UHS_REG"},
+    [NEXELL_SDMMC__RSTn]   = { 0x078, "RSTn"},
+    [NEXELL_SDMMC___Rev0]  = { 0x07C, "_Rev0"},
+    [NEXELL_SDMMC__BMOD]   = { 0x080, "BMOD"},
+    [NEXELL_SDMMC__PLDMND] = { 0x084, "PLDMND"},
+    [NEXELL_SDMMC__DBADDR] = { 0x088, "DBADDR"},
+    [NEXELL_SDMMC__IDSTS]  = { 0x08C, "IDSTS"},
+    [NEXELL_SDMMC__IDINTEN]= { 0x090, "IDINTEN"},
+    [NEXELL_SDMMC__DSCADDR]= { 0x094, "DSCADDR"},
+    [NEXELL_SDMMC__BUFADDR]= { 0x098, "BUFADDR"},
+    [NEXELL_SDMMC___Rev1]  = { 0x09C, "_Rev1"}, 
+    [NEXELL_SDMMC__CARDTHRCTL]    = { 0x100, "CARDTHRCTL"},
+    [NEXELL_SDMMC__BACKEND_POWER] = { 0x104, "BACKEND_POWER"},
+    [NEXELL_SDMMC__UHS_REG_EXT]   = { 0x108, "UHS_REG_EXT"},
+    [NEXELL_SDMMC__EMMC_DDR_REG]  = { 0x10C, "EMMC_DDR_REG"},
+    [NEXELL_SDMMC__ENABLE_SHIFT]  = { 0x110, "ENABLE_SHIFT"},
+    [NEXELL_SDMMC__CLKCTRL]  = { 0x114, "CLKCTRL"},
+    [NEXELL_SDMMC___Rev2]    = { 0x118, "Rev2"},
+    [NEXELL_SDMMC__DATA]     = { 0x200, "DATA"},
+    [NEXELL_SDMMC___Rev3]    = { 0x204, "_Rev3"},
+    [NEXELL_SDMMC__TIEMODE]  = { 0x400, "TIEMODE"},
+    [NEXELL_SDMMC__TIESRAM]  = { 0x404, "TIESRAM"},
+    [NEXELL_SDMMC__TIEDRVPHASE]  = { 0x408, "TIEDRVPHASE"},
+    [NEXELL_SDMMC__TIESMPPHASE]  = { 0x40C, "TIESMPPHASE"},
+    [NEXELL_SDMMC__TIEDSDELAY]   = { 0x410, "TIEDSDELAY"},
+};
 
 /* static void update_irq(NexellSDMMCState *s) */
 /* { */
@@ -49,63 +96,159 @@
 /* } */
 
 static uint64_t
-sdmmc_read(void *opaque, hwaddr addr, unsigned int size)
+sdmmc_read(void *opaque, hwaddr offset, unsigned int size)
 {
     NexellSDMMCState *s = opaque;
+    int cnt = NEXELL_SDMMC_ENUM_MAX;
+    uint64_t temp = 0;
+    
+    do {
+        if (nx_sdmmc_regmap[cnt-1].offset == offset) {
+            printf("[SUKER-QEMU-SDMMC] %s: %s: offset=0x%lx, ", \
+                   __func__, \
+                   nx_sdmmc_regmap[cnt-1].name, \
+                   offset);
+            break;
+        }
+        else
+            cnt -= 1;
+    } while(cnt > 0);
 
-    switch (addr) {
-        case NEXELL_SDMMC__PWREN:
-            printf("[SUKER-QEMU-SDMMC] %s: PWREN: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN);
-            return s->PWREN;
-        case NEXELL_SDMMC__CLKENA:
-            printf("[SUKER-QEMU-SDMMC] %s: CLKENA: addr=0x%lx,val=%d \n", __func__, addr, s->CLKENA);
-            return s->CLKENA;
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN); */
-        /* case NEXELL_SDMMC__PWREN: */
-        /*     printf("[SUKER-QEMU-SDMMC] %s: addr=0x%lx,val=%d \n", __func__, addr, s->PWREN);             */
+    switch (offset) {
+    case NEXELL_SDMMC_OFFSET_CTRL:    temp = s->CTRL;  break;
+    case NEXELL_SDMMC_OFFSET_PWREN:   temp = s->PWREN;  break;
+    case NEXELL_SDMMC_OFFSET_CLKDIV:  temp = s->CLKDIV;  break;
+    case NEXELL_SDMMC_OFFSET_CLKSRC:  temp = s->CLKSRC;  break;
+    case NEXELL_SDMMC_OFFSET_CLKENA:  temp = s->CLKENA;	  break;
+    case NEXELL_SDMMC_OFFSET_TMOUT:   temp = s->TMOUT;  break;
+    case NEXELL_SDMMC_OFFSET_CTYPE:   temp = s->CTYPE;  break;
+    case NEXELL_SDMMC_OFFSET_BLKSIZ:  temp = s->BLKSIZ;  break;
+    case NEXELL_SDMMC_OFFSET_BYTCNT:  temp = s->BYTCNT;  break;
+    case NEXELL_SDMMC_OFFSET_INTMASK: temp = s->INTMASK;  break;
+    case NEXELL_SDMMC_OFFSET_CMDARG:  temp = s->CMDARG;  break;
+    case NEXELL_SDMMC_OFFSET_CMD:     temp = s->CMD;  break;
+//    case NEXELL_SDMMC_OFFSET_RESP:   temp = s->RESP;  break;
+    case NEXELL_SDMMC_OFFSET_MINTSTS: temp = s->MINTSTS;  break;
+    case NEXELL_SDMMC_OFFSET_RINTSTS: temp = s->RINTSTS;  break;
+    case NEXELL_SDMMC_OFFSET_STATUS:  temp = s->STATUS;  break;
+    case NEXELL_SDMMC_OFFSET_FIFOTH:  temp = s->FIFOTH;  break;
+    case NEXELL_SDMMC_OFFSET_CDETECT: temp = s->CDETECT;  break;
+    case NEXELL_SDMMC_OFFSET_WRTPRT:  temp = s->WRTPRT;  break;
+    case NEXELL_SDMMC_OFFSET_GPIO:    temp = s->GPIO;  break;
+    case NEXELL_SDMMC_OFFSET_TCBCNT:  temp = s->TCBCNT;  break;
+    case NEXELL_SDMMC_OFFSET_TBBCNT:  temp = s->TBBCNT;  break;
+    case NEXELL_SDMMC_OFFSET_DEBNCE:  temp = s->DEBNCE;  break;
+    case NEXELL_SDMMC_OFFSET_USRID:   temp = s->USRID;  break;
+    case NEXELL_SDMMC_OFFSET_VERID:   temp = s->VERID;  break;
+    case NEXELL_SDMMC_OFFSET_HCON:    temp = s->HCON;  break;
+    case NEXELL_SDMMC_OFFSET_UHS_REG: temp = s->UHS_REG;  break;
+    case NEXELL_SDMMC_OFFSET_RSTn:    temp = s->RSTn;   break;
+//    case NEXELL_SDMMC_OFFSET__Rev0:   temp = s->_  break;
+    case NEXELL_SDMMC_OFFSET_BMOD:    temp = s->BMOD;  break;
+    case NEXELL_SDMMC_OFFSET_PLDMND:  temp = s->PLDMND;  break;
+    case NEXELL_SDMMC_OFFSET_DBADDR:  temp = s->DBADDR;  break;
+    case NEXELL_SDMMC_OFFSET_IDSTS:   temp =  s->IDSTS;  break;
+    case NEXELL_SDMMC_OFFSET_IDINTEN: temp =  s->IDINTEN;  break;
+    case NEXELL_SDMMC_OFFSET_DSCADDR: temp =  s->DSCADDR;  break;
+    case NEXELL_SDMMC_OFFSET_BUFADDR: temp =  s->BUFADDR;  break;
+//    case NEXELL_SDMMC_OFFSET__Rev1:temp =  s->  break;
+    case NEXELL_SDMMC_OFFSET_CARDTHRCTL:    temp = s->CARDTHRCTL;  break;
+    case NEXELL_SDMMC_OFFSET_BACKEND_POWER: temp = s->BACKEND_POWER;  break;
+    case NEXELL_SDMMC_OFFSET_UHS_REG_EXT:   temp = s->UHS_REG_EXT;  break;
+    case NEXELL_SDMMC_OFFSET_EMMC_DDR_REG:  temp = s->EMMC_DDR_REG;  break;
+    case NEXELL_SDMMC_OFFSET_ENABLE_SHIFT:  temp = s->ENABLE_SHIFT;  break;
+    case NEXELL_SDMMC_OFFSET_CLKCTRL:       temp = s->CLKCTRL;  break;
+//    case NEXELL_SDMMC_OFFSET__Rev2:temp =  s->  break;
+    case NEXELL_SDMMC_OFFSET_DATA:          temp = s->DATA;  break;
+//    case NEXELL_SDMMC_OFFSET__Rev3:temp =  s->
+    case NEXELL_SDMMC_OFFSET_TIEMODE:       temp = s->TIEMODE;  break;
+    case NEXELL_SDMMC_OFFSET_TIESRAM:       temp = s->TIESRAM;  break;
+    case NEXELL_SDMMC_OFFSET_TIEDRVPHASE:   temp = s->TIEDRVPHASE;     break;
+    case NEXELL_SDMMC_OFFSET_TIESMPPHASE:   temp = s->TIESMPPHASE;     break;
+    case NEXELL_SDMMC_OFFSET_TIEDSDELAY:    temp = s->TIEDSDELAY;   break;
     }
-    
-//    printf("[SUKER-QEMU-SDMMC] %s \n", __func__);
-    
-    
-    return 0;
+
+    printf("val=%lu \n", temp);
+    return temp;
 }
 
 static void
-sdmmc_write(void *opaque, hwaddr addr,
+sdmmc_write(void *opaque, hwaddr offset,
            uint64_t val64, unsigned int size)
 {
     NexellSDMMCState *s = opaque;
 
-    switch (addr) {
-        case NEXELL_SDMMC__PWREN:
-            s->PWREN = (unsigned int)val64;
-            printf("[SUKER-QEMU-SDMMC] %s: PWREN: write to addr=0x%lx, val=0x%lx \n", __func__,addr,val64);
+    int cnt = NEXELL_SDMMC_ENUM_MAX;
+
+    do {
+        if (nx_sdmmc_regmap[cnt-1].offset == offset) {
+            printf("[SUKER-QEMU-SDMMC] %s: %s: write to offset=0x%lx, val=0x%lx\n", \
+                   __func__, \
+                   nx_sdmmc_regmap[cnt-1].name, \
+                   offset,
+                   val64);
             break;
-        case NEXELL_SDMMC__CLKENA:
-            s->CLKENA = (unsigned int)val64;
-            printf("[SUKER-QEMU-SDMMC] %s: CLKENA: write to addr=0x%lx, val=0x%lx \n", __func__,addr,val64);
-            break;
-    }    
+        }
+        else
+            cnt -= 1;
+    } while(cnt > 0);
+
+    switch (offset) {
+    case NEXELL_SDMMC_OFFSET_CTRL:    s->CTRL = val64;  break;
+    case NEXELL_SDMMC_OFFSET_PWREN:   s->PWREN = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CLKDIV:  s->CLKDIV = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CLKSRC:  s->CLKSRC = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CLKENA:  s->CLKENA = val64;  break;
+    case NEXELL_SDMMC_OFFSET_TMOUT:   s->TMOUT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CTYPE:   s->CTYPE = val64;  break;
+    case NEXELL_SDMMC_OFFSET_BLKSIZ:  s->BLKSIZ = val64;  break;
+    case NEXELL_SDMMC_OFFSET_BYTCNT:  s->BYTCNT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_INTMASK: s->INTMASK = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CMDARG:  s->CMDARG = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CMD:     s->CMD = val64;  break;
+//    case NEXELL_SDMMC_OFFSET_RESP:   s->RESP = val64;  break;
+    case NEXELL_SDMMC_OFFSET_MINTSTS: s->MINTSTS = val64;  break;
+    case NEXELL_SDMMC_OFFSET_RINTSTS: s->RINTSTS = val64;  break;
+    case NEXELL_SDMMC_OFFSET_STATUS:  s->STATUS = val64;  break;
+    case NEXELL_SDMMC_OFFSET_FIFOTH:  s->FIFOTH = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CDETECT: s->CDETECT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_WRTPRT:  s->WRTPRT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_GPIO:    s->GPIO = val64;  break;
+    case NEXELL_SDMMC_OFFSET_TCBCNT:  s->TCBCNT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_TBBCNT:  s->TBBCNT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_DEBNCE:  s->DEBNCE = val64;  break;
+    case NEXELL_SDMMC_OFFSET_USRID:   s->USRID = val64;  break;
+    case NEXELL_SDMMC_OFFSET_VERID:   s->VERID = val64;  break;
+    case NEXELL_SDMMC_OFFSET_HCON:    s->HCON = val64;  break;
+    case NEXELL_SDMMC_OFFSET_UHS_REG: s->UHS_REG = val64;  break;
+    case NEXELL_SDMMC_OFFSET_RSTn:    s->RSTn = val64;   break;
+//    case NEXELL_SDMMC_OFFSET__Rev0:   s->_  break = val64;
+    case NEXELL_SDMMC_OFFSET_BMOD:    s->BMOD = val64;  break;
+    case NEXELL_SDMMC_OFFSET_PLDMND:  s->PLDMND = val64;  break;
+    case NEXELL_SDMMC_OFFSET_DBADDR:  s->DBADDR = val64;  break;
+    case NEXELL_SDMMC_OFFSET_IDSTS:    s->IDSTS = val64;  break;
+    case NEXELL_SDMMC_OFFSET_IDINTEN:  s->IDINTEN = val64;  break;
+    case NEXELL_SDMMC_OFFSET_DSCADDR:  s->DSCADDR = val64;  break;
+    case NEXELL_SDMMC_OFFSET_BUFADDR:  s->BUFADDR = val64;  break;
+//    case NEXELL_SDMMC_OFFSET__Rev1: s->  break = val64;
+    case NEXELL_SDMMC_OFFSET_CARDTHRCTL:    s->CARDTHRCTL = val64;  break;
+    case NEXELL_SDMMC_OFFSET_BACKEND_POWER: s->BACKEND_POWER = val64;  break;
+    case NEXELL_SDMMC_OFFSET_UHS_REG_EXT:   s->UHS_REG_EXT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_EMMC_DDR_REG:  s->EMMC_DDR_REG = val64;  break;
+    case NEXELL_SDMMC_OFFSET_ENABLE_SHIFT:  s->ENABLE_SHIFT = val64;  break;
+    case NEXELL_SDMMC_OFFSET_CLKCTRL:       s->CLKCTRL = val64;  break;
+//    case NEXELL_SDMMC_OFFSET__Rev2: s->  break;
+    case NEXELL_SDMMC_OFFSET_DATA:          s->DATA = val64;  break;
+//    case NEXELL_SDMMC_OFFSET__Rev3: s->
+    case NEXELL_SDMMC_OFFSET_TIEMODE:       s->TIEMODE = val64;  break;
+    case NEXELL_SDMMC_OFFSET_TIESRAM:       s->TIESRAM = val64;  break;
+    case NEXELL_SDMMC_OFFSET_TIEDRVPHASE:   s->TIEDRVPHASE = val64;     break;
+    case NEXELL_SDMMC_OFFSET_TIESMPPHASE:   s->TIESMPPHASE = val64;     break;
+    case NEXELL_SDMMC_OFFSET_TIEDSDELAY:    s->TIEDSDELAY = val64;   break;
+    default:
+        //hw_error("[SUKER_QEMU-ERROR] %s: bad read: offset=0x%x\n", __func__, (int)offset);
+        break;
+    }
     //printf("[SUKER-QEMU-SDMMC] %s \n", __func__);
 }
 
