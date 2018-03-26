@@ -52,12 +52,13 @@ static const struct MemmapEntry {
     hwaddr base;
     hwaddr size;
 } nexell_swallow_memmap[] = {
-    [NEXELL_SWALLOW_DEBUG] =    {        0x0,      0x100 },
-    [NEXELL_SWALLOW_MROM] =     {     0x1000,    0x20000 },
+    [NEXELL_SWALLOW_DEBUG] =    {        0x0,     0x1000 },
+    [NEXELL_SWALLOW_MROM] =     {     0x1000,    0x10000 },
     [NEXELL_SWALLOW_CLINT] =    {  0x2000000,    0x10000 },
     [NEXELL_SWALLOW_PLIC] =     {  0xc000000,  0x4000000 },
     [NEXELL_SWALLOW_UART0] =    { 0x10013000,     0x1000 },
     [NEXELL_SWALLOW_UART1] =    { 0x10023000,     0x1000 },
+    [NEXELL_SWALLOW_SRAM] =     { 0x8FFF0000,    0x10000 },
     [NEXELL_SWALLOW_DRAM] =     { 0x80000000,        0x0 },
 }, nexell_swallow_sdmmc_memmap[] = {    
     [NEXELL_SWALLOW_SDMMC0] =   { 0x26080000,    0x10000 },
@@ -233,6 +234,7 @@ static void riscv_nexell_swallow_init(MachineState *machine)
     NexellSwallowState *s = g_new0(NexellSwallowState, 1);
     MemoryRegion *sys_memory = get_system_memory();
     MemoryRegion *main_mem = g_new(MemoryRegion, 1);
+    MemoryRegion *main_smem = g_new(MemoryRegion, 1);
     MemoryRegion *boot_rom = g_new(MemoryRegion, 1);
 
     /* Initialize SOC */
@@ -251,6 +253,11 @@ static void riscv_nexell_swallow_init(MachineState *machine)
                            machine->ram_size, &error_fatal);
     memory_region_add_subregion(sys_memory, memmap[NEXELL_SWALLOW_DRAM].base,
         main_mem);
+
+    memory_region_init_ram(main_smem, NULL, "riscv.nexell.swallow.sram",
+                           memmap[NEXELL_SWALLOW_SRAM].size, &error_fatal);
+    memory_region_add_subregion(sys_memory, memmap[NEXELL_SWALLOW_SRAM].base,
+        main_smem);
 
     /* create device tree */
     create_fdt(s, memmap, machine->ram_size, machine->kernel_cmdline);
@@ -323,6 +330,7 @@ static void riscv_nexell_swallow_init(MachineState *machine)
     //-----------------------------------------------------------------
     nexell_sdmmc_create(sys_memory, memmap_sdmmc[NEXELL_SWALLOW_SDMMC0].base,
         NEXELL_PLIC(s->plic)->irqs[sdhci_irq[0]]);
+    
 }
 
 static int riscv_nexell_swallow_sysbus_device_init(SysBusDevice *sysbusdev)

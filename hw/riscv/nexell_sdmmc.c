@@ -104,20 +104,20 @@ static const struct sdmmcMapEntry {
 static uint64_t sdmmc_read(void *opaque, hwaddr offset, unsigned int size)
 {
     NexellSDMMCState *s = opaque;
-    int cnt = NEXELL_SDMMC_ENUM_MAX;
+//    int cnt = NEXELL_SDMMC_ENUM_MAX;
     uint64_t temp = 0;
-    
-    do {
-        if (nx_sdmmc_regmap[cnt-1].offset == offset) {
-            printf("[QEMU][%s] %s: offset=0x%lx, ", \
-                   __func__, \
-                   nx_sdmmc_regmap[cnt-1].name, \
-                   offset);
-            break;
-        }
-        else
-            cnt -= 1;
-    } while(cnt > 0);
+
+    /* do { */
+    /*     if (nx_sdmmc_regmap[cnt-1].offset == offset) { */
+    /*         printf("[QEMU][%s] %s: offset=0x%lx, ",   \ */
+    /*                __func__, \ */
+    /*                nx_sdmmc_regmap[cnt-1].name, \ */
+    /*                offset); */
+    /*         break; */
+    /*     } */
+    /*     else */
+    /*         cnt -= 1; */
+    /* } while(cnt > 0); */
 
     switch (offset) {
     case NEXELL_SDMMC_OFFSET_CTRL         :  temp = s->CTRL;               break;
@@ -172,9 +172,9 @@ static uint64_t sdmmc_read(void *opaque, hwaddr offset, unsigned int size)
     case NEXELL_SDMMC_OFFSET_TIESMPPHASE  :  temp = s->TIESMPPHASE;        break;
     case NEXELL_SDMMC_OFFSET_TIEDSDELAY   :  temp = s->TIEDSDELAY;         break;
     }
-    printf("val=%lu \n", temp);
+//    printf("val=%lu \n", temp);
 
-    sdmmc_register_detail(TYPE_READ, opaque, offset);
+//    sdmmc_register_detail(TYPE_READ, opaque, offset);
     return temp;
 }
 
@@ -366,5 +366,6 @@ NexellSDMMCState *nexell_sdmmc_create(MemoryRegion *address_space, hwaddr base,
                           TYPE_NEXELL_SDMMC, sizeof(NexellSDMMCState));
     //NEXELL_SDMMC_MAX);
     memory_region_add_subregion(address_space, base, &s->mmio);
+
     return s;
 }
