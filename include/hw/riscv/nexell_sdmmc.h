@@ -22,7 +22,7 @@
         OBJECT_CHECK(NexellSDMMCState, (obj), TYPE_NEXELL_SDMMC)
 
 #define NEXELL_SDMMC_FIFO_LEN 16
-#define NEXELL_SWALLOW_NUM_SDMMC 3
+#define NEXELL_SWALLOW_NUM_SDMMC 2
 
 typedef struct NexellSDMMCState
 {

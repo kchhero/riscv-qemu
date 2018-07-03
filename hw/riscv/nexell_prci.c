@@ -1,7 +1,7 @@
 /*
  * QEMU Nexell PRCI (Power, Reset, Clock, Interrupt)
  *
- * Copyright (c) 2017 Nexell, Inc.
+ * Copyright (c) 2018 Nexell, Inc.
  *
  * Simple model of the PRCI to emulate register reads made by the SDK BSP
  *

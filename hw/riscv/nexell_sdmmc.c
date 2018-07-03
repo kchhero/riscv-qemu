@@ -30,62 +30,62 @@
 
 static void sdmmc_register_detail(const char* type, void *opaque, hwaddr offset);
 
-static const struct sdmmcMapEntry {
-    hwaddr offset;
-    char   name[32];
-} nx_sdmmc_regmap[] = {
-    [NEXELL_SDMMC__CTRL]         = {0x000, "CTRL"},
-    [NEXELL_SDMMC__PWREN]        = {0x004, "PWREN"},
-    [NEXELL_SDMMC__CLKDIV]       = {0x008, "CLKDIV"},
-    [NEXELL_SDMMC__CLKSRC]       = {0x00C, "CLKSRC"},
-    [NEXELL_SDMMC__CLKENA]       = {0x010, "CLKENA"},
-    [NEXELL_SDMMC__TMOUT]        = {0x014, "TMOUT"},
-    [NEXELL_SDMMC__CTYPE]        = {0x018, "CTYPE"},
-    [NEXELL_SDMMC__BLKSIZ]       = {0x01C, "BLKSIZ"},
-    [NEXELL_SDMMC__BYTCNT]       = {0x020, "BYTCNT"},
-    [NEXELL_SDMMC__INTMASK]      = {0x024, "INTMASK"},
-    [NEXELL_SDMMC__CMDARG]       = {0x028, "CMDARG"},
-    [NEXELL_SDMMC__CMD]          = {0x02C, "CMD"},
-    [NEXELL_SDMMC__RESP]         = {0x030, "RESP"},
-    [NEXELL_SDMMC__MINTSTS]      = {0x040, "MINTSTS"},
-    [NEXELL_SDMMC__RINTSTS]      = {0x044, "RINTSTS"},
-    [NEXELL_SDMMC__STATUS]       = {0x048, "STATUS"},
-    [NEXELL_SDMMC__FIFOTH]       = {0x04C, "FIFOTH"},
-    [NEXELL_SDMMC__CDETECT]      = {0x050, "CDETECT"},
-    [NEXELL_SDMMC__WRTPRT]       = {0x054, "WRTPRT"},
-    [NEXELL_SDMMC__GPIO]         = {0x058, "GPIO"},
-    [NEXELL_SDMMC__TCBCNT]       = {0x05C, "TCBCNT"},
-    [NEXELL_SDMMC__TBBCNT]       = {0x060, "TBBCNT"},
-    [NEXELL_SDMMC__DEBNCE]       = {0x064, "DEBNCE"},
-    [NEXELL_SDMMC__USRID]        = {0x068, "USRID"},
-    [NEXELL_SDMMC__VERID]        = {0x06C, "VERID"},
-    [NEXELL_SDMMC__HCON]         = {0x070, "HCON"},
-    [NEXELL_SDMMC__UHS_REG]      = {0x074, "UHS_REG"},
-    [NEXELL_SDMMC__RSTn]         = {0x078, "RSTn"},
-    [NEXELL_SDMMC___Rev0]        = {0x07C, "_Rev0"},
-    [NEXELL_SDMMC__BMOD]         = {0x080, "BMOD"},
-    [NEXELL_SDMMC__PLDMND]       = {0x084, "PLDMND"},
-    [NEXELL_SDMMC__DBADDR]       = {0x088, "DBADDR"},
-    [NEXELL_SDMMC__IDSTS]        = {0x08C, "IDSTS"},
-    [NEXELL_SDMMC__IDINTEN]      = {0x090, "IDINTEN"},
-    [NEXELL_SDMMC__DSCADDR]      = {0x094, "DSCADDR"},
-    [NEXELL_SDMMC__BUFADDR]      = {0x098, "BUFADDR"},
-    [NEXELL_SDMMC___Rev1]        = {0x09C, "_Rev1"},
-    [NEXELL_SDMMC__CARDTHRCTL]   = {0x100, "CARDTHRCTL"},
-    [NEXELL_SDMMC__BACKEND_POWER]= {0x104, "BACKEND_POWER"},
-    [NEXELL_SDMMC__UHS_REG_EXT]  = {0x108, "UHS_REG_EXT"},
-    [NEXELL_SDMMC__EMMC_DDR_REG] = {0x10C, "EMMC_DDR_REG"},
-    [NEXELL_SDMMC__ENABLE_SHIFT] = {0x110, "ENABLE_SHIFT"},
-    [NEXELL_SDMMC__CLKCTRL]      = {0x114, "CLKCTRL"},
-    [NEXELL_SDMMC___Rev2]        = {0x118, "_Rev2"},
-    [NEXELL_SDMMC__DATA]         = {0x200, "DATA"},
-    [NEXELL_SDMMC___Rev3]        = {0x204, "_Rev3"},
-    [NEXELL_SDMMC__TIEMODE]      = {0x400, "TIEMODE"},
-    [NEXELL_SDMMC__TIESRAM]      = {0x404, "TIESRAM"},
-    [NEXELL_SDMMC__TIEDRVPHASE]  = {0x408, "TIEDRVPHASE"},
-    [NEXELL_SDMMC__TIESMPPHASE]  = {0x40C, "TIESMPPHASE"},
-    [NEXELL_SDMMC__TIEDSDELAY]   = {0x410, "TIEDSDELAY"},
-};
+/* static const struct sdmmcMapEntry { */
+/*     hwaddr offset; */
+/*     char   name[32]; */
+/* } nx_sdmmc_regmap[] = { */
+/*     [NEXELL_SDMMC__CTRL]         = {0x000, "CTRL"}, */
+/*     [NEXELL_SDMMC__PWREN]        = {0x004, "PWREN"}, */
+/*     [NEXELL_SDMMC__CLKDIV]       = {0x008, "CLKDIV"}, */
+/*     [NEXELL_SDMMC__CLKSRC]       = {0x00C, "CLKSRC"}, */
+/*     [NEXELL_SDMMC__CLKENA]       = {0x010, "CLKENA"}, */
+/*     [NEXELL_SDMMC__TMOUT]        = {0x014, "TMOUT"}, */
+/*     [NEXELL_SDMMC__CTYPE]        = {0x018, "CTYPE"}, */
+/*     [NEXELL_SDMMC__BLKSIZ]       = {0x01C, "BLKSIZ"}, */
+/*     [NEXELL_SDMMC__BYTCNT]       = {0x020, "BYTCNT"}, */
+/*     [NEXELL_SDMMC__INTMASK]      = {0x024, "INTMASK"}, */
+/*     [NEXELL_SDMMC__CMDARG]       = {0x028, "CMDARG"}, */
+/*     [NEXELL_SDMMC__CMD]          = {0x02C, "CMD"}, */
+/*     [NEXELL_SDMMC__RESP]         = {0x030, "RESP"}, */
+/*     [NEXELL_SDMMC__MINTSTS]      = {0x040, "MINTSTS"}, */
+/*     [NEXELL_SDMMC__RINTSTS]      = {0x044, "RINTSTS"}, */
+/*     [NEXELL_SDMMC__STATUS]       = {0x048, "STATUS"}, */
+/*     [NEXELL_SDMMC__FIFOTH]       = {0x04C, "FIFOTH"}, */
+/*     [NEXELL_SDMMC__CDETECT]      = {0x050, "CDETECT"}, */
+/*     [NEXELL_SDMMC__WRTPRT]       = {0x054, "WRTPRT"}, */
+/*     [NEXELL_SDMMC__GPIO]         = {0x058, "GPIO"}, */
+/*     [NEXELL_SDMMC__TCBCNT]       = {0x05C, "TCBCNT"}, */
+/*     [NEXELL_SDMMC__TBBCNT]       = {0x060, "TBBCNT"}, */
+/*     [NEXELL_SDMMC__DEBNCE]       = {0x064, "DEBNCE"}, */
+/*     [NEXELL_SDMMC__USRID]        = {0x068, "USRID"}, */
+/*     [NEXELL_SDMMC__VERID]        = {0x06C, "VERID"}, */
+/*     [NEXELL_SDMMC__HCON]         = {0x070, "HCON"}, */
+/*     [NEXELL_SDMMC__UHS_REG]      = {0x074, "UHS_REG"}, */
+/*     [NEXELL_SDMMC__RSTn]         = {0x078, "RSTn"}, */
+/*     [NEXELL_SDMMC___Rev0]        = {0x07C, "_Rev0"}, */
+/*     [NEXELL_SDMMC__BMOD]         = {0x080, "BMOD"}, */
+/*     [NEXELL_SDMMC__PLDMND]       = {0x084, "PLDMND"}, */
+/*     [NEXELL_SDMMC__DBADDR]       = {0x088, "DBADDR"}, */
+/*     [NEXELL_SDMMC__IDSTS]        = {0x08C, "IDSTS"}, */
+/*     [NEXELL_SDMMC__IDINTEN]      = {0x090, "IDINTEN"}, */
+/*     [NEXELL_SDMMC__DSCADDR]      = {0x094, "DSCADDR"}, */
+/*     [NEXELL_SDMMC__BUFADDR]      = {0x098, "BUFADDR"}, */
+/*     [NEXELL_SDMMC___Rev1]        = {0x09C, "_Rev1"}, */
+/*     [NEXELL_SDMMC__CARDTHRCTL]   = {0x100, "CARDTHRCTL"}, */
+/*     [NEXELL_SDMMC__BACKEND_POWER]= {0x104, "BACKEND_POWER"}, */
+/*     [NEXELL_SDMMC__UHS_REG_EXT]  = {0x108, "UHS_REG_EXT"}, */
+/*     [NEXELL_SDMMC__EMMC_DDR_REG] = {0x10C, "EMMC_DDR_REG"}, */
+/*     [NEXELL_SDMMC__ENABLE_SHIFT] = {0x110, "ENABLE_SHIFT"}, */
+/*     [NEXELL_SDMMC__CLKCTRL]      = {0x114, "CLKCTRL"}, */
+/*     [NEXELL_SDMMC___Rev2]        = {0x118, "_Rev2"}, */
+/*     [NEXELL_SDMMC__DATA]         = {0x200, "DATA"}, */
+/*     [NEXELL_SDMMC___Rev3]        = {0x204, "_Rev3"}, */
+/*     [NEXELL_SDMMC__TIEMODE]      = {0x400, "TIEMODE"}, */
+/*     [NEXELL_SDMMC__TIESRAM]      = {0x404, "TIESRAM"}, */
+/*     [NEXELL_SDMMC__TIEDRVPHASE]  = {0x408, "TIEDRVPHASE"}, */
+/*     [NEXELL_SDMMC__TIESMPPHASE]  = {0x40C, "TIESMPPHASE"}, */
+/*     [NEXELL_SDMMC__TIEDSDELAY]   = {0x410, "TIEDSDELAY"}, */
+/* }; */
 
 /* static void update_irq(NexellSDMMCState *s) */
 /* { */
@@ -182,20 +182,20 @@ static void sdmmc_write(void *opaque, hwaddr offset, uint64_t val64, unsigned in
 {
     NexellSDMMCState *s = opaque;
 
-    int cnt = NEXELL_SDMMC_ENUM_MAX;
+    /* int cnt = NEXELL_SDMMC_ENUM_MAX; */
 
-    do {
-        if (nx_sdmmc_regmap[cnt-1].offset == offset) {
-            printf("[QEMU][%s] %s: write to offset=0x%lx, val=0x%lx\n", \
-                   __func__, \
-                   nx_sdmmc_regmap[cnt-1].name, \
-                   offset,
-                   val64);
-            break;
-        }
-        else
-            cnt -= 1;
-    } while(cnt > 0);
+    /* do { */
+    /*     if (nx_sdmmc_regmap[cnt-1].offset == offset) { */
+    /*         printf("[QEMU][%s] %s: write to offset=0x%lx, val=0x%lx\n", \ */
+    /*                __func__, \ */
+    /*                nx_sdmmc_regmap[cnt-1].name, \ */
+    /*                offset, */
+    /*                val64); */
+    /*         break; */
+    /*     } */
+    /*     else */
+    /*         cnt -= 1; */
+    /* } while(cnt > 0); */
 
     switch (offset) {
     case NEXELL_SDMMC_OFFSET_CTRL         :  s->CTRL = val64;                     break;

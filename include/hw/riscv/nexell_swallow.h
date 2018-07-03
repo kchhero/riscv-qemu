@@ -1,5 +1,5 @@
 /*
- * SiFive U series machine interface
+ * QEMU RISC-V Nexell Swallow machine interface
  *
  * Copyright (c) 2017 SiFive, Inc.
  *
@@ -19,21 +19,17 @@
 #ifndef HW_NEXELL_SWALLOW_H
 #define HW_NEXELL_SWALLOW_H
 
-#include "hw/riscv/nexell_sdmmc.h"
-
-#define TYPE_NEXELL_SWALLOW "riscv.nexell_swallow"
-
+#define TYPE_NEXELL_SWALLOW_BOARD "riscv.nexell_swallow"
 #define NEXELL_SWALLOW(obj) \
-    OBJECT_CHECK(NexellSwallowState, (obj), TYPE_NEXELL_SWALLOW)
+    OBJECT_CHECK(NexellSwallowState, (obj), TYPE_NEXELL_SWALLOW_BOARD)
 
-typedef struct NexellSwallowState {
+typedef struct {
     /*< private >*/
     SysBusDevice parent_obj;
 
     /*< public >*/
     RISCVHartArrayState soc;
     DeviceState *plic;
-    NexellSDMMCState nx_sdhci[NEXELL_SWALLOW_NUM_SDMMC];
     void *fdt;
     int fdt_size;
 } NexellSwallowState;
@@ -41,27 +37,27 @@ typedef struct NexellSwallowState {
 enum {
     NEXELL_SWALLOW_DEBUG,
     NEXELL_SWALLOW_MROM,
+    NEXELL_SWALLOW_TEST,
     NEXELL_SWALLOW_CLINT,
     NEXELL_SWALLOW_PLIC,
+    NEXELL_SWALLOW_MMIO,
+    NEXELL_SWALLOW_UART9,
     NEXELL_SWALLOW_UART0,
-    NEXELL_SWALLOW_UART1,
-    NEXELL_SWALLOW_DRAM,
+    NEXELL_SWALLOW_SDMMC0,
+    NEXELL_SWALLOW_SDMMC1,   
     NEXELL_SWALLOW_SRAM,
+    NEXELL_SWALLOW_DRAM
 };
 
 enum {
-    NEXELL_SWALLOW_SDMMC0,// = NEXELL_SWALLOW_SDMMC_ENUM_OFFSET,
-    NEXELL_SWALLOW_SDMMC1,
-    NEXELL_SWALLOW_SDMMC2,
+    SDMMC0_IRQ = 27,
+    SDMMC1_IRQ = 28,    
+    UART0_IRQ = 58,
+    IRQ_NDEV = 89,
 };
 
 enum {
-    NEXELL_SWALLOW_UART0_IRQ = 3,
-    NEXELL_SWALLOW_UART1_IRQ = 4
-};
-
-static const int sdhci_irq[NEXELL_SWALLOW_NUM_SDMMC] = {
-    48,49,50,
+    NEXELL_SWALLOW_CLOCK_FREQ = 1000000000
 };
 
 #define NEXELL_SWALLOW_PLIC_HART_CONFIG "MS"
@@ -75,9 +71,9 @@ static const int sdhci_irq[NEXELL_SWALLOW_NUM_SDMMC] = {
 #define NEXELL_SWALLOW_PLIC_CONTEXT_STRIDE 0x1000
 
 #if defined(TARGET_RISCV32)
-#define NEXELL_SWALLOW_CPU TYPE_RISCV_CPU_NEXELL_SWALLOW34
+#define NEXELL_SWALLOW_CPU TYPE_RISCV_CPU_NEXELL_SWALLOW32
 #elif defined(TARGET_RISCV64)
-#define NEXELL_SWALLOW_CPU TYPE_RISCV_CPU_NEXELL_SWALLOW54
+#define NEXELL_SWALLOW_CPU TYPE_RISCV_CPU_NEXELL_SWALLOW64
 #endif
 
 #endif

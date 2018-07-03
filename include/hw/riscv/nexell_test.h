@@ -1,7 +1,7 @@
 /*
- * Spike machine interface
+ * QEMU Test Finisher interface
  *
- * Copyright (c) 2017 SiFive, Inc.
+ * Copyright (c) 2018 Nexell, Inc.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -16,35 +16,27 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HW_RISCV_SPIKE_H
-#define HW_RISCV_SPIKE_H
+#ifndef HW_NEXELL_TEST_H
+#define HW_NEXELL_TEST_H
 
-typedef struct {
+#define TYPE_NEXELL_TEST "riscv.nexell.test"
+
+#define NEXELL_TEST(obj) \
+    OBJECT_CHECK(NexellTestState, (obj), TYPE_NEXELL_TEST)
+
+typedef struct NexellTestState {
     /*< private >*/
     SysBusDevice parent_obj;
 
     /*< public >*/
-    RISCVHartArrayState soc;
-    void *fdt;
-    int fdt_size;
-} SpikeState;
+    MemoryRegion mmio;
+} NexellTestState;
 
 enum {
-    SPIKE_MROM,
-    SPIKE_CLINT,
-    SPIKE_DRAM
+    FINISHER_FAIL = 0x3333,
+    FINISHER_PASS = 0x5555
 };
 
-enum {
-    SPIKE_CLOCK_FREQ = 1000000000
-};
-
-#if defined(TARGET_RISCV32)
-#define SPIKE_V1_09_1_CPU TYPE_RISCV_CPU_RV32GCSU_V1_09_1
-#define SPIKE_V1_10_0_CPU TYPE_RISCV_CPU_RV32GCSU_V1_10_0
-#elif defined(TARGET_RISCV64)
-#define SPIKE_V1_09_1_CPU TYPE_RISCV_CPU_RV64GCSU_V1_09_1
-#define SPIKE_V1_10_0_CPU TYPE_RISCV_CPU_RV64GCSU_V1_10_0
-#endif
+DeviceState *nexell_test_create(hwaddr addr);
 
 #endif

@@ -47,4 +47,8 @@ enum {
     NEXELL_TIME_BASE    = 0xBFF8
 };
 
+enum {
+    NEXELL_CLINT_TIMEBASE_FREQ = 10000000
+};
+
 #endif

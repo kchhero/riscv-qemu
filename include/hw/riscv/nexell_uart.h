@@ -1,8 +1,8 @@
 /*
- * SiFive UART interface
+ * Nexell UART interface
  *
  * Copyright (c) 2016 Stefan O'Rear
- * Copyright (c) 2017 SiFive, Inc.
+ * Copyright (c) 2017 Nexell, Inc.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
